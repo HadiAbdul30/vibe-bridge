@@ -1,5 +1,6 @@
 import json
 from flask import Flask, request
+import ollama
 
 app = Flask(__name__)
 
@@ -20,14 +21,28 @@ class VibeBridge:
 bridge = VibeBridge()
 
 
-# The Magic AI Transformer Helper
-def ai_transform(text, prompt="Make this punchy for social media"):
-  """Simulated zero-config AI transformer function.
-
-  (Later we plug in OpenAI / Ollama / Gemini in 1 line here!)
-  """
-  # For now, it dynamically builds a smart payload
-  return f"✨ [AI OPTIMIZED]: '{text.upper()}' -> {prompt}"
+# ⚡ REAL LOCAL AI TRANSFORMER
+def ai_transform(
+    text,
+    prompt=(
+        "Rewrite this text into an exciting 1-sentence social media caption with"
+        " emojis"
+    ),
+    model="llama3.2",
+):
+  """Uses local Ollama to dynamically rewrite content with ZERO API keys."""
+  try:
+    response = ollama.chat(
+        model=model,
+        messages=[{
+            "role": "user",
+            "content": f"{prompt}\n\nInput Text: {text}",
+        }],
+    )
+    return response["message"]["content"].strip()
+  except Exception as e:
+    # Graceful fallback if Ollama isn't active
+    return f"✨ [FALLBACK OPTIMIZED]: {text} (Ollama Error: {e})"
 
 
 @app.route("/webhook/<source_event>", methods=["POST"])
