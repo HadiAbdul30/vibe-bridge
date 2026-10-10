@@ -10,8 +10,6 @@ class VibeBridge:
     self.routes = {}
 
   def connect(self, trigger_event):
-    """Decorator to bind an incoming trigger to a function."""
-
     def decorator(func):
       self.routes[trigger_event] = func
       return func
@@ -19,8 +17,17 @@ class VibeBridge:
     return decorator
 
 
-# Global bridge instance
 bridge = VibeBridge()
+
+
+# The Magic AI Transformer Helper
+def ai_transform(text, prompt="Make this punchy for social media"):
+  """Simulated zero-config AI transformer function.
+
+  (Later we plug in OpenAI / Ollama / Gemini in 1 line here!)
+  """
+  # For now, it dynamically builds a smart payload
+  return f"✨ [AI OPTIMIZED]: '{text.upper()}' -> {prompt}"
 
 
 @app.route("/webhook/<source_event>", methods=["POST"])
