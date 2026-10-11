@@ -175,14 +175,13 @@ def ai_transform(text_input: str, prompt: str) -> str:
 
 
 # ------------------------------------------------------------------------------
-# 4. Stable Automation Pipeline
+# 4. Automation Pipelines (Code-First Triggers)
 # ------------------------------------------------------------------------------
 @bridge.connect("youtube_new_video")
 def handle_youtube_upload(data):
     video_url = data.get("url", "")
     raw_title = data.get("title", "")
 
-    # Clean, single-pass AI transformation
     smart_caption = ai_transform(
         raw_title,
         prompt=(
@@ -192,11 +191,27 @@ def handle_youtube_upload(data):
     )
     final_message = f"📢 **New Video Upload!**\n{smart_caption}\n🔗 {video_url}"
 
-    # Dispatch to active connectors
     dispatch_to_connectors(final_message)
-
-    # Save to SQLite audit log
     log_event("youtube_new_video", data, final_message)
+    return {"status": "success", "broadcast": final_message}
+
+
+@bridge.connect("github_new_pr")
+def handle_github_pr(data):
+    repo = data.get("repository", "vibe-bridge")
+    pr_title = data.get("title", "New Pull Request")
+
+    smart_summary = ai_transform(
+        pr_title,
+        prompt=(
+            "Summarize this pull request title into a professional 1-sentence"
+            " changelog update."
+        ),
+    )
+    final_message = f"💻 **GitHub PR Update** (`{repo}`)\n{smart_summary}"
+
+    dispatch_to_connectors(final_message)
+    log_event("github_new_pr", data, final_message)
     return {"status": "success", "broadcast": final_message}
 
 
@@ -349,6 +364,6 @@ def dashboard_table():
 
 
 if __name__ == "__main__":
-    print("⚡ Starting VibeBridge Stable Engine...")
+    print("⚡ Starting VibeBridge Engine with Multiple Pipelines...")
     print("📍 Dashboard available at: http://localhost:5000/dashboard")
     app.run(host="0.0.0.0", port=5000, debug=True)
