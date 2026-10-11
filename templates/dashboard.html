@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VibeBridge Enterprise Control Center</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            darker: '#090d16',
+            card: '#111827',
+            border: '#1f2937',
+            accent: '#6366f1',
+          }
+        }
+      }
+    }
+  </script>
+  <!-- HTMX for live auto-refreshing components -->
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+
+<body class="bg-darker text-slate-100 min-h-screen font-sans antialiased selection:bg-accent selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div
+          class="w-9 h-9 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-lg">
+          ⚡
+        </div>
+        <div>
+          <h1 class="font-bold text-lg tracking-tight">Vibe<span class="text-indigo-500">Bridge</span></h1>
+          <p class="text-xs text-slate-400">Local-First AI Automation Engine</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span
+          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-2"></span>
+          Engine Online
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+    <!-- Metrics Overview Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+        <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Active Pipeline Core</div>
+        <div class="text-2xl font-bold mt-2 text-white flex items-center gap-2">
+          Ollama <span
+            class="text-xs font-normal text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">Llama
+            3.2</span>
+        </div>
+      </div>
+      <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+        <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Storage & Audit Layer</div>
+        <div class="text-2xl font-bold mt-2 text-white flex items-center gap-2">
+          SQLite <span
+            class="text-xs font-normal text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Persistent</span>
+        </div>
+      </div>
+      <div class="bg-card border border-border rounded-xl p-5 shadow-sm">
+        <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Frontend Architecture</div>
+        <div class="text-2xl font-bold mt-2 text-white flex items-center gap-2">
+          HTMX <span
+            class="text-xs font-normal text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">Real-time</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credentials Configuration Form Card (Top 5 Integrations) -->
+    <div class="bg-card border border-border rounded-xl p-6 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-white tracking-tight">Destination App Credentials</h2>
+          <p class="text-slate-400 text-sm">Configure your outbound webhooks. Data streams to all active credentials
+            simultaneously.</p>
+        </div>
+      </div>
+
+      <form hx-post="/api/settings" hx-target="#save-status" hx-swap="innerHTML" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">1. Discord Webhook
+              URL</label>
+            <input type="text" name="discord_webhook" placeholder="https://discord.com/api/webhooks/..."
+              class="w-auto w-full bg-darker border border-border rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">2. Slack Incoming
+              Webhook URL</label>
+            <input type="text" name="slack_webhook" placeholder="https://hooks.slack.com/services/..."
+              class="w-full bg-darker border border-border rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">3a. Telegram Bot
+              Token</label>
+            <input type="text" name="telegram_token" placeholder="123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+              class="w-full bg-darker border border-border rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">3b. Telegram Chat
+              ID</label>
+            <input type="text" name="telegram_chat_id" placeholder="-100123456789"
+              class="w-full bg-darker border border-border rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">4. Microsoft Teams
+              Webhook URL</label>
+            <input type="text" name="teams_webhook" placeholder="https://outlook.office.com/webhook/..."
+              class="w-full bg-darker border border-border rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">5. Custom Generic
+              Webhook URL</label>
+            <input type="text" name="custom_webhook" placeholder="https://your-custom-api.com/endpoint"
+              class="w-full bg-darker border border-border rounded-lg px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <button type="submit"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-2.5 rounded-lg text-sm shadow-sm transition-all focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-card">
+            Save Configurations
+          </button>
+          <div id="save-status" class="text-sm font-medium"></div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Active Trigger Endpoints Card -->
+    <div class="bg-card border border-border rounded-xl p-6 shadow-sm">
+      <h2 class="text-lg font-semibold text-white tracking-tight mb-2">Active Webhook Endpoints</h2>
+      <p class="text-slate-400 text-sm mb-4">Send POST requests to these endpoints to fire your event pipeline
+        automatically.</p>
+      <div hx-get="/dashboard/webhooks-list" hx-trigger="load" class="space-y-2">
+        <span class="text-slate-500 text-sm">Discovering routes...</span>
+      </div>
+    </div>
+
+    <!-- Live Audit Trail Table Card -->
+    <div class="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-border flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-white tracking-tight">Live Audit Trail</h2>
+          <p class="text-slate-400 text-sm">Auto-refreshes every 3 seconds from SQLite</p>
+        </div>
+        <div class="flex items-center space-x-2 text-xs text-slate-400">
+          <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
+          <span>Listening for triggers</span>
+        </div>
+      </div>
+
+      <div hx-get="/dashboard/table" hx-trigger="load, every 3s" class="overflow-x-auto">
+        <div class="p-6 text-center text-slate-500 text-sm">Loading audit telemetry...</div>
+      </div>
+    </div>
+
+  </main>
+
+</body>
+
+</html>
