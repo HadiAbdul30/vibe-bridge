@@ -308,15 +308,15 @@ def dashboard():
 def dashboard_webhooks_list():
     triggers = list(bridge.routes.keys())
     if not triggers:
-        return '<p class="text-slate-500 text-sm">No webhooks registered yet.</p>'
+        return '<p class="text-slate-500 text-sm font-mono">No webhooks registered yet.</p>'
 
-    html = '<div class="space-y-2">'
+    html = '<div class="space-y-3">'
     for trigger in triggers:
         url = f"http://localhost:5000/webhook/{trigger}"
         html += f"""
-        <div class="flex items-center justify-between bg-darker border border-border px-4 py-3 rounded-lg">
+        <div class="flex items-center justify-between bg-obsidian border border-borderSubtle px-4 py-3 rounded-lg">
             <span class="font-medium text-slate-200 text-sm">{trigger}</span>
-            <code class="text-xs font-mono bg-slate-900 text-indigo-400 px-3 py-1 rounded border border-border">{url}</code>
+            <code class="text-xs font-mono bg-surface text-indigo-400 px-3 py-1.5 rounded border border-borderSubtle">{url}</code>
         </div>
         """
     html += "</div>"
@@ -336,34 +336,34 @@ def dashboard_table():
     html = """
     <table class="w-full text-left border-collapse">
         <thead>
-            <tr class="border-b border-border bg-darker/50 text-slate-400 text-xs uppercase tracking-wider">
-                <th class="py-3 px-6 font-semibold">ID</th>
-                <th class="py-3 px-6 font-semibold">Trigger Event</th>
-                <th class="py-3 px-6 font-semibold">Input Payload</th>
-                <th class="py-3 px-6 font-semibold">AI Output & Dispatched Message</th>
-                <th class="py-3 px-6 font-semibold">Timestamp</th>
+            <tr class="border-b border-borderSubtle bg-obsidian/50 text-slate-400 text-xs uppercase tracking-wider font-mono">
+                <th class="py-3.5 px-6 font-semibold">ID</th>
+                <th class="py-3.5 px-6 font-semibold">Trigger Event</th>
+                <th class="py-3.5 px-6 font-semibold">Input Payload</th>
+                <th class="py-3.5 px-6 font-semibold">AI Output & Dispatched Message</th>
+                <th class="py-3.5 px-6 font-semibold">Timestamp</th>
             </tr>
         </thead>
-        <tbody class="divide-y divide-border text-sm">
+        <tbody class="divide-y divide-borderSubtle text-sm">
     """
     for log in logs:
         log_id, trigger, payload, result, timestamp = log
         html += f"""
-        <tr class="hover:bg-slate-800/30 transition-colors">
+        <tr class="hover:bg-surfaceHover/50 transition-colors">
             <td class="py-4 px-6 font-mono text-xs text-slate-400">#{log_id}</td>
             <td class="py-4 px-6 font-medium text-indigo-400">{trigger}</td>
             <td class="py-4 px-6 font-mono text-xs text-slate-400 max-w-xs truncate" title="{payload}">{payload}</td>
             <td class="py-4 px-6 font-mono text-xs text-slate-200 max-w-sm truncate" title="{result}">{result}</td>
-            <td class="py-4 px-6 text-xs text-slate-500">{timestamp}</td>
+            <td class="py-4 px-6 text-xs text-slate-500 font-mono">{timestamp}</td>
         </tr>
         """
     if not logs:
-        html += '<tr><td colspan="5" class="py-8 text-center text-slate-500">No automation events logged yet. Trigger a webhook to populate telemetry!</td></tr>'
+        html += '<tr><td colspan="5" class="py-8 text-center text-slate-500 font-mono text-sm">No automation events logged yet. Trigger a webhook to populate telemetry!</td></tr>'
     html += "</tbody></table>"
     return html
 
 
 if __name__ == "__main__":
-    print("⚡ Starting VibeBridge Engine with Multiple Pipelines...")
+    print("⚡ Starting VibeBridge Linear-Grade Engine...")
     print("📍 Dashboard available at: http://localhost:5000/dashboard")
     app.run(host="0.0.0.0", port=5000, debug=True)
