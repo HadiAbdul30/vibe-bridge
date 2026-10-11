@@ -76,7 +76,7 @@ init_db()
 
 
 # ------------------------------------------------------------------------------
-# 2. VibeBridge Core Engine & Top 5 Connectors (The Hands)
+# 2. VibeBridge Core Engine & Connectors
 # ------------------------------------------------------------------------------
 class VibeBridge:
 
@@ -97,28 +97,28 @@ bridge = VibeBridge()
 
 
 def dispatch_to_connectors(content: str):
-    """Broadcasts content to any of the top 5 configured platforms dynamically."""
+    """Broadcasts content to any configured platform dynamically."""
     results = {}
 
-    # 1. Discord Connector
+    # 1. Discord
     discord_url = get_setting("discord_webhook")
     if discord_url:
         try:
             res = requests.post(discord_url, json={"content": content}, timeout=5)
             results["discord"] = res.status_code == 204
-        except Exception as e:
+        except Exception:
             results["discord"] = False
 
-    # 2. Slack Connector
+    # 2. Slack
     slack_url = get_setting("slack_webhook")
     if slack_url:
         try:
             res = requests.post(slack_url, json={"text": content}, timeout=5)
             results["slack"] = res.status_code == 200
-        except Exception as e:
+        except Exception:
             results["slack"] = False
 
-    # 3. Telegram Connector
+    # 3. Telegram
     tg_token = get_setting("telegram_token")
     tg_chat = get_setting("telegram_chat_id")
     if tg_token and tg_chat:
@@ -128,19 +128,19 @@ def dispatch_to_connectors(content: str):
                 url, json={"chat_id": tg_chat, "text": content}, timeout=5
             )
             results["telegram"] = res.status_code == 200
-        except Exception as e:
+        except Exception:
             results["telegram"] = False
 
-    # 4. Microsoft Teams Connector
+    # 4. Microsoft Teams
     teams_url = get_setting("teams_webhook")
     if teams_url:
         try:
             res = requests.post(teams_url, json={"text": content}, timeout=5)
             results["teams"] = res.status_code == 200
-        except Exception as e:
+        except Exception:
             results["teams"] = False
 
-    # 5. Custom Generic Webhook Connector
+    # 5. Custom Webhook
     custom_url = get_setting("custom_webhook")
     if custom_url:
         try:
@@ -150,7 +150,7 @@ def dispatch_to_connectors(content: str):
                 timeout=5,
             )
             results["custom"] = res.status_code in [200, 201, 204]
-        except Exception as e:
+        except Exception:
             results["custom"] = False
 
     return results
@@ -160,7 +160,7 @@ def dispatch_to_connectors(content: str):
 # 3. Local AI Brain (Ollama)
 # ------------------------------------------------------------------------------
 def ai_transform(text_input: str, prompt: str) -> str:
-    """Transforms text locally using Ollama (Llama 3.2)."""
+    """Stable single-pass local AI execution."""
     try:
         response = ollama.chat(
             model="llama3.2",
@@ -175,24 +175,27 @@ def ai_transform(text_input: str, prompt: str) -> str:
 
 
 # ------------------------------------------------------------------------------
-# 4. Automation Pipeline Definition
+# 4. Stable Automation Pipeline
 # ------------------------------------------------------------------------------
 @bridge.connect("youtube_new_video")
 def handle_youtube_upload(data):
     video_url = data.get("url", "")
     raw_title = data.get("title", "")
 
-    # Think via local AI
+    # Clean, single-pass AI transformation
     smart_caption = ai_transform(
         raw_title,
-        prompt="Write a high-energy 1-sentence social media caption with emojis.",
+        prompt=(
+            "Write a concise, high-energy 1-sentence social media caption with"
+            " emojis."
+        ),
     )
     final_message = f"📢 **New Video Upload!**\n{smart_caption}\n🔗 {video_url}"
 
-    # Act (Broadcasts to all configured destination platforms simultaneously)
+    # Dispatch to active connectors
     dispatch_to_connectors(final_message)
 
-    # Record to SQLite diary
+    # Save to SQLite audit log
     log_event("youtube_new_video", data, final_message)
     return {"status": "success", "broadcast": final_message}
 
@@ -202,7 +205,6 @@ def handle_youtube_upload(data):
 # ------------------------------------------------------------------------------
 @app.route("/webhook/<trigger_name>", methods=["POST"])
 def trigger_webhook(trigger_name):
-    """Dynamic endpoint catching incoming webhooks."""
     if trigger_name not in bridge.routes:
         return jsonify({"error": f"No handler registered for '{trigger_name}'"}), 404
 
@@ -214,19 +216,61 @@ def trigger_webhook(trigger_name):
 
 @app.route("/api/settings", methods=["POST"])
 def update_settings():
-    """Saves user-submitted credentials from the GUI settings form."""
     data = request.form
     for key, value in data.items():
         if value.strip():
             save_setting(key, value.strip())
         else:
-            save_setting(key, "")  # Clear setting if field is blank
+            save_setting(key, "")
     return '<span class="text-emerald-400 font-medium">✅ Configurations saved successfully!</span>'
+
+
+@app.route("/api/test/<platform>", methods=["POST"])
+def test_platform(platform):
+    key_map = {
+        "discord": "discord_webhook",
+        "slack": "slack_webhook",
+        "teams": "teams_webhook",
+        "custom": "custom_webhook",
+    }
+    if platform not in key_map:
+        return '<span class="text-red-400 text-xs">Invalid platform</span>', 400
+
+    url = get_setting(key_map[platform])
+    if not url:
+        return (
+            f'<span class="text-amber-400 text-xs">⚠️ Configure {platform} URL first</span>',
+            400,
+        )
+
+    test_message = (
+        "🧪 **VibeBridge Test Ping:** Connection established successfully!"
+    )
+    try:
+        if platform == "discord":
+            res = requests.post(url, json={"content": test_message}, timeout=5)
+            success = res.status_code == 204
+        elif platform in ["slack", "teams"]:
+            res = requests.post(url, json={"text": test_message}, timeout=5)
+            success = res.status_code in [200, 201]
+        else:
+            res = requests.post(
+                url,
+                json={"message": test_message, "source": "VibeBridge"},
+                timeout=5,
+            )
+            success = res.status_code in [200, 201, 204]
+
+        if success:
+            return f'<span class="text-emerald-400 text-xs font-medium">✅ {platform.capitalize()} test passed!</span>'
+        else:
+            return f'<span class="text-red-400 text-xs">❌ Error code: {res.status_code}</span>'
+    except Exception:
+        return '<span class="text-red-400 text-xs">❌ Connection failed</span>'
 
 
 @app.route("/api/webhooks", methods=["GET"])
 def list_webhooks():
-    """REST API endpoint returning active webhooks."""
     webhook_list = [
         {
             "trigger_name": name,
@@ -238,17 +282,15 @@ def list_webhooks():
 
 
 # ------------------------------------------------------------------------------
-# 6. Web UI Dashboard Routes (Tailwind & HTMX)
+# 6. Web UI Dashboard Routes
 # ------------------------------------------------------------------------------
 @app.route("/dashboard")
 def dashboard():
-    """Renders the pro Tailwind dashboard."""
     return render_template("dashboard.html")
 
 
 @app.route("/dashboard/webhooks-list")
 def dashboard_webhooks_list():
-    """HTMX partial view returning active triggers list."""
     triggers = list(bridge.routes.keys())
     if not triggers:
         return '<p class="text-slate-500 text-sm">No webhooks registered yet.</p>'
@@ -268,7 +310,6 @@ def dashboard_webhooks_list():
 
 @app.route("/dashboard/table")
 def dashboard_table():
-    """HTMX partial view auto-refreshing audit logs with Tailwind styling."""
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute(
@@ -307,10 +348,7 @@ def dashboard_table():
     return html
 
 
-# ------------------------------------------------------------------------------
-# Server Entry Point
-# ------------------------------------------------------------------------------
 if __name__ == "__main__":
-    print("⚡ Starting VibeBridge Enterprise Engine...")
+    print("⚡ Starting VibeBridge Stable Engine...")
     print("📍 Dashboard available at: http://localhost:5000/dashboard")
     app.run(host="0.0.0.0", port=5000, debug=True)
